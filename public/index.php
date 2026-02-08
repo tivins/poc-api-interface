@@ -41,9 +41,9 @@ $routes[] = new Route(
         HTTPCode::OK->value => new DTO(User::class, ['id', 'name', 'email']),
         HTTPCode::Forbidden->value => ForbiddenResponse::class
     ],
-    security: [
-        'bearer' => ['Authorization' => 'Bearer {token}'],
-    ],
+    # security: [
+    #     'bearer' => ['Authorization' => 'Bearer {token}'],
+    # ],
 );
 
 
@@ -91,6 +91,6 @@ function somethingWentWrong(): bool {
     return rand(1,10) < 5;
 }
 
-/*
+
 $apiOut = (new LoginHandler())->handle(['email' => 'example@example.com', 'password' => 'password']);
-*/
+var_dump($apiOut);
