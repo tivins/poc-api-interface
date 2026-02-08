@@ -41,6 +41,7 @@ readonly class User
         public string $name = '',
         #[Validate(Validator::Email)]
         public string $email = '',
+        #[Validate(Validator::NotEmpty)]
         public string $password = '',
     )
     {

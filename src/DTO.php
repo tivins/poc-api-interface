@@ -2,9 +2,12 @@
 
 namespace Tivins\FAPI;
 
-class DTO
+readonly class DTO
 {
-public function __construct(string $class, array $properties = [])
-{
-}
+    public function __construct(
+        public string $class, 
+        public array $properties = []
+    )
+    {
+    }
 }
