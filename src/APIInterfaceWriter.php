@@ -18,10 +18,6 @@ readonly class APIInterfaceWriter
         foreach ($this->route->responses as $code => $response) {
             $uses[] = "use $response;";
         }
-        if ($this->route->request !== null && $this->hasRequestValidateAttributes()) {
-            $uses[] = 'use ' . Validate::class . ';';
-            $uses[] = 'use ' . Validator::class . ';';
-        }
         return $uses;
     }
 
@@ -44,7 +40,7 @@ readonly class APIInterfaceWriter
         return false;
     }
 
-    private function generateRequestClass(): string
+    private function generateRequestClassBody(): string
     {
         $dto = $this->route->request;
         if ($dto === null) {
@@ -80,7 +76,31 @@ readonly class APIInterfaceWriter
         }
         $params = implode("\n", $lines);
         $body = "{$tab}public function __construct(\n{$params}\n{$tab})\n{$tab}{\n{$tab}}\n";
-        return "readonly class {$requestName}\n{\n{$body}}\n\n";
+        return "readonly class {$requestName}\n{\n{$body}}\n";
+    }
+
+    private function writeRequestFile(): void
+    {
+        if ($this->route->request === null) {
+            return;
+        }
+        $requestName = $this->route->name . 'Request';
+        $uses = [];
+        if ($this->hasRequestValidateAttributes()) {
+            $uses[] = 'use ' . Validate::class . ';';
+            $uses[] = 'use ' . Validator::class . ';';
+        }
+        $usesStr = $uses !== [] ? implode("\n", $uses) . "\n\n" : '';
+        $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$this->namespace};
+
+{$usesStr}{$this->generateRequestClassBody()}
+PHP. "\n";
+        file_put_contents("{$this->directory}/{$requestName}.php", $content);
     }
 
     public function getResponsesTypes(): array
@@ -94,10 +114,11 @@ readonly class APIInterfaceWriter
 
     public function generate(): string
     {
+        $this->writeRequestFile();
+
         $tab = '    ';
         $interfaceName = $this->route->name . 'HandlerInterface';
         $uses = implode("\n", $this->buildUses());
-        $requestClass = $this->generateRequestClass();
         $stubs = $tab . implode("\n\n$tab", $this->getStubMethods()) . "\n";
         $handle = $this->getHandleMethod();
 
@@ -110,18 +131,19 @@ namespace $this->namespace;
 
 {$uses}
 
-{$requestClass}abstract class $interfaceName
+abstract class $interfaceName
 {
 $stubs
 $handle
 }
-PHP . "\n";
+PHP. "\n";
 
         file_put_contents("{$this->directory}/{$interfaceName}.php", $class);
         return $class;
     }
 
-    private function getStubMethods(): array {
+    private function getStubMethods(): array
+    {
         $php = [];
         $requestParam = $this->route->request !== null
             ? "({$this->route->name}Request \$request)"
@@ -137,7 +159,8 @@ PHP . "\n";
         return $php;
     }
 
-    private function getHandleMethod(): string {
+    private function getHandleMethod(): string
+    {
         $responsesTypes = $this->getResponsesTypes();
         $tab = '    ';
         $class = '';
