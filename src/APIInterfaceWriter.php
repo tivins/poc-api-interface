@@ -12,11 +12,37 @@ readonly class APIInterfaceWriter
     {
     }
 
+    /** @return string|DTO */
+    private function getResponseSpec(int $code)
+    {
+        return $this->route->responses[$code];
+    }
+
+    private function isResponseDTO(int $code): bool
+    {
+        return $this->getResponseSpec($code) instanceof DTO;
+    }
+
+    /** Generated name for OK is {Name}Response, for others {Name}{CodeName}Response. */
+    private function getResponseClassName(int $code): string
+    {
+        $spec = $this->getResponseSpec($code);
+        if ($spec instanceof DTO) {
+            $codeName = HTTPCode::tryFrom($code)?->name ?? 'Response';
+            return $codeName === 'OK'
+                ? $this->route->name . 'Response'
+                : $this->route->name . $codeName . 'Response';
+        }
+        return basename((string) $spec);
+    }
+
     private function buildUses(): array
     {
         $uses = ['use ' . HTTPCode::class . ";"];
         foreach ($this->route->responses as $code => $response) {
-            $uses[] = "use $response;";
+            if (!$response instanceof DTO) {
+                $uses[] = "use $response;";
+            }
         }
         return $uses;
     }
@@ -103,11 +129,54 @@ PHP. "\n";
         file_put_contents("{$this->directory}/{$requestName}.php", $content);
     }
 
+    private function generateResponseClassBody(DTO $dto, string $responseName): string
+    {
+        $tab = '    ';
+        $lines = [];
+        try {
+            $ref = new \ReflectionClass($dto->class);
+            foreach ($dto->properties as $propName) {
+                $prop = $ref->getProperty($propName);
+                $type = $prop->getType();
+                $typeName = ($type instanceof \ReflectionNamedType) ? $type->getName() : 'string';
+                $default = $typeName === 'int' ? '0' : "''";
+                $lines[] = "{$tab}{$tab}public {$typeName} \${$propName} = {$default},";
+            }
+        } catch (\Throwable) {
+            foreach ($dto->properties as $propName) {
+                $lines[] = "{$tab}{$tab}public string \${$propName} = '',";
+            }
+        }
+        $params = implode("\n", $lines);
+        $body = "{$tab}public function __construct(\n{$params}\n{$tab})\n{$tab}{\n{$tab}}\n";
+        return "readonly class {$responseName}\n{\n{$body}}\n";
+    }
+
+    private function writeResponseFiles(): void
+    {
+        foreach ($this->route->responses as $code => $response) {
+            if (!$response instanceof DTO) {
+                continue;
+            }
+            $responseName = $this->getResponseClassName($code);
+            $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$this->namespace};
+
+{$this->generateResponseClassBody($response, $responseName)}
+PHP . "\n";
+            file_put_contents("{$this->directory}/{$responseName}.php", $content);
+        }
+    }
+
     public function getResponsesTypes(): array
     {
         $responsesTypes = [];
         foreach ($this->route->responses as $code => $response) {
-            $responsesTypes[] = basename($response);
+            $responsesTypes[] = $this->getResponseClassName($code);
         }
         return $responsesTypes;
     }
@@ -115,6 +184,7 @@ PHP. "\n";
     public function generate(): string
     {
         $this->writeRequestFile();
+        $this->writeResponseFiles();
 
         $tab = '    ';
         $interfaceName = $this->route->name . 'HandlerInterface';
@@ -154,7 +224,7 @@ PHP. "\n";
          * @var string $response
          */
         foreach ($this->route->responses as $code => $response) {
-            $php[] = "abstract public function return" . HTTPCode::tryFrom($code)->name . "(): " . basename($response) . ";";
+            $php[] = "abstract public function return" . HTTPCode::tryFrom($code)->name . "(): " . $this->getResponseClassName($code) . ";";
         }
         return $php;
     }

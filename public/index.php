@@ -5,6 +5,7 @@ use Tivins\FAPI\DTO;
 use Tivins\FAPI\ForbiddenResponse;
 use Tivins\FAPI\Generated\LoginHandlerInterface;
 use Tivins\FAPI\Generated\LoginRequest;
+use Tivins\FAPI\Generated\LoginResponse;
 use Tivins\FAPI\HTTPCode;
 use Tivins\FAPI\OpenAPI\OpenAPI;
 use Tivins\FAPI\Route;
@@ -12,17 +13,6 @@ use Tivins\FAPI\Validate;
 use Tivins\FAPI\Validator;
 
 require_once __DIR__ . '/../vendor/autoload.php';
-
-readonly class LoginResponse
-{
-    public function __construct(
-        public int    $id = 0,
-        public string $name = '',
-        public string $email = '',
-    )
-    {
-    }
-}
 
 readonly class User
 {
@@ -48,7 +38,7 @@ $routes[] = new Route(
     description: 'Login to the system',
     tags: ['auth'],
     responses: [
-        HTTPCode::OK->value => LoginResponse::class,
+        HTTPCode::OK->value => new DTO(User::class, ['id', 'name', 'email']),
         HTTPCode::Forbidden->value => ForbiddenResponse::class
     ],
     security: [

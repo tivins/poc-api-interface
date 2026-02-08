@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tivins\FAPI\Generated;
 
 use Tivins\FAPI\HTTPCode;
-use LoginResponse;
 use Tivins\FAPI\ForbiddenResponse;
 
 abstract class LoginHandlerInterface
