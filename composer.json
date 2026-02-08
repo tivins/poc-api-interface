@@ -1,0 +1,18 @@
+{
+    "name": "tivins/fapi",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Tivins\\FAPI\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Tivins",
+            "email": "pub.git@elabo.fr"
+        }
+    ],
+    "require": {
+        "php": "^8.3"
+    }
+}
