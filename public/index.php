@@ -51,7 +51,7 @@ $apiWriter = new APIInterfaceWriter(__dir__ .'/../src/Generated', 'Tivins\FAPI\G
 $apiWriter->generate();
 
 $openAPI = new OpenAPI($routes);
-echo json_encode($openAPI->toArray(), JSON_PRETTY_PRINT);
+file_put_contents(__dir__ . '/../src/Generated/openapi.json', json_encode($openAPI->toArray(), JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
 
 
 class LoginHandler extends LoginHandlerInterface
