@@ -185,7 +185,7 @@ PHP. "\n";
         }
         $parts = [];
         foreach ($dto->properties as $propName) {
-            $parts[] = "\$data['{$propName}']";
+            $parts[] = "{$propName}: \$data['{$propName}']";
         }
         return implode(', ', $parts);
     }

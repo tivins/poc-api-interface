@@ -44,7 +44,6 @@ $routes[] = new Route(
     name: 'Login',
     request: new DTO(User::class, ['email', 'password']),
     methods: ['POST'],
-    required: ['email' => 'string', 'password' => 'string'],
     summary: 'Login to the system',
     description: 'Login to the system',
     tags: ['auth'],
@@ -103,40 +102,5 @@ function somethingWentWrong(): bool {
 }
 
 /*
-#[\Tivins\FAPI\Route(
-    path: '/login',
-    name: 'Login',
-    methods: ['POST'],
-    required: ['email' => 'string', 'password' => 'string'],
-    summary: 'Login to the system',
-    description: 'Login to the system',
-    tags: ['auth'],
-    responses: [
-        HTTPCode::OK->value => LoginResponse::class,
-        HTTPCode::Forbidden->value => ForbiddenResponse::class
-    ],
-    security: [
-        'bearer' => ['Authorization' => 'Bearer {token}'],
-    ],
-)]
-abstract class LoginHandlerInterface
-{
-    public function handle(array $data): ForbiddenResponse|LoginResponse
-    {
-        $code = $this->handleLogin(new LoginRequest($data['email'], $data['password']));
-        return match ($code) {
-            HTTPCode::OK => $this->returnSuccess(),
-            HTTPCode::Forbidden => $this->returnForbidden(),
-            HTTPCode::InternalServerError => new \Tivins\FAPI\GenericErrorResponse('unexpected error'),
-        };
-    }
-
-    abstract public function handleLogin(LoginRequest $request): HTTPCode;
-
-    abstract public function returnSuccess(): LoginResponse;
-
-    abstract public function returnForbidden(): ForbiddenResponse;
-}
-
 $apiOut = (new LoginHandler())->handle(['email' => 'example@example.com', 'password' => 'password']);
 */
