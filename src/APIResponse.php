@@ -8,7 +8,7 @@ readonly class APIResponse
     public function __construct(
         public int $code = 200,
         public array $messages = [],
-        public mixed $data,
+        public mixed $data = null,
     ) {
     }
 
