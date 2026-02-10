@@ -2,6 +2,8 @@
 
 use Tivins\FAPI\APIInterfaceWriter;
 use Tivins\FAPI\DTO;
+use Tivins\FAPI\DTOExtraProperty;
+use Tivins\FAPI\DTOSource;
 use Tivins\FAPI\ForbiddenResponse;
 use Tivins\FAPI\Generated\LoginHandlerInterface;
 use Tivins\FAPI\Generated\LoginRequest;
@@ -38,7 +40,13 @@ $routes[] = new Route(
     description: 'Login to the system',
     tags: ['auth'],
     responses: [
-        HTTPCode::OK->value => new DTO(User::class, ['id', 'name', 'email']),
+        HTTPCode::OK->value => new DTO(
+            sources: [new DTOSource(User::class, ['id', 'name', 'email'])],
+            extra: [
+                new DTOExtraProperty('token', 'string', "''"),
+                new DTOExtraProperty('expiresAt', 'int', '0'),
+            ]
+        ),
         HTTPCode::Forbidden->value => ForbiddenResponse::class
     ],
     # security: [
@@ -78,6 +86,8 @@ class LoginHandler extends LoginHandlerInterface
             $this->user->id,
             $this->user->name,
             $this->user->email,
+            token: 'eyJ0eXAiOiJKV1QiLCJhbGc...',
+            expiresAt: time() + 3600,
         );
     }
 

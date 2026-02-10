@@ -1,5 +1,6 @@
 {
     "name": "tivins/fapi",
+    "version": "1.1.0",
     "license": "MIT",
     "autoload": {
         "psr-4": {

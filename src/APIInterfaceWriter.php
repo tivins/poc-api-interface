@@ -54,10 +54,9 @@ readonly class APIInterfaceWriter
             return false;
         }
         try {
-            $ref = new \ReflectionClass($dto->class);
-            foreach ($dto->properties as $propName) {
-                $prop = $ref->getProperty($propName);
-                if ($prop->getAttributes(Validate::class) !== []) {
+            foreach ($dto->resolveProperties() as $resolved) {
+                $prop = $resolved['reflection'];
+                if ($prop !== null && $prop->getAttributes(Validate::class) !== []) {
                     return true;
                 }
             }
@@ -76,27 +75,29 @@ readonly class APIInterfaceWriter
         $tab = '    ';
         $lines = [];
         try {
-            $ref = new \ReflectionClass($dto->class);
-            foreach ($dto->properties as $propName) {
-                $prop = $ref->getProperty($propName);
-                $type = $prop->getType();
-                $typeName = ($type instanceof \ReflectionNamedType) ? $type->getName() : 'string';
-                $attrs = $prop->getAttributes(Validate::class);
+            foreach ($dto->resolveProperties() as $resolved) {
+                $propName = $resolved['name'];
+                $typeName = $resolved['type'];
+                $default = $resolved['default'];
+                $prop = $resolved['reflection'];
                 $attrLine = '';
-                if ($attrs !== []) {
-                    $attr = $attrs[0]->newInstance();
-                    $parts = [];
-                    foreach ($attr->validators ?? [] as $v) {
-                        $parts[] = 'Validator::' . $v->name;
-                    }
-                    if ($parts !== []) {
-                        $attrLine = "{$tab}{$tab}#[Validate(" . implode(', ', $parts) . ")]\n{$tab}{$tab}";
+                if ($prop !== null) {
+                    $attrs = $prop->getAttributes(Validate::class);
+                    if ($attrs !== []) {
+                        $attr = $attrs[0]->newInstance();
+                        $parts = [];
+                        foreach ($attr->validators ?? [] as $v) {
+                            $parts[] = 'Validator::' . $v->name;
+                        }
+                        if ($parts !== []) {
+                            $attrLine = "{$tab}{$tab}#[Validate(" . implode(', ', $parts) . ")]\n{$tab}{$tab}";
+                        }
                     }
                 }
-                $lines[] = "{$attrLine}public {$typeName} \${$propName} = '',";
+                $lines[] = "{$attrLine}public {$typeName} \${$propName} = {$default},";
             }
         } catch (\Throwable) {
-            foreach ($dto->properties as $propName) {
+            foreach ($dto->getPropertyNames() as $propName) {
                 $lines[] = "{$tab}{$tab}public string \${$propName} = '',";
             }
         }
@@ -134,16 +135,11 @@ PHP. "\n";
         $tab = '    ';
         $lines = [];
         try {
-            $ref = new \ReflectionClass($dto->class);
-            foreach ($dto->properties as $propName) {
-                $prop = $ref->getProperty($propName);
-                $type = $prop->getType();
-                $typeName = ($type instanceof \ReflectionNamedType) ? $type->getName() : 'string';
-                $default = $typeName === 'int' ? '0' : "''";
-                $lines[] = "{$tab}{$tab}public {$typeName} \${$propName} = {$default},";
+            foreach ($dto->resolveProperties() as $resolved) {
+                $lines[] = "{$tab}{$tab}public {$resolved['type']} \${$resolved['name']} = {$resolved['default']},";
             }
         } catch (\Throwable) {
-            foreach ($dto->properties as $propName) {
+            foreach ($dto->getPropertyNames() as $propName) {
                 $lines[] = "{$tab}{$tab}public string \${$propName} = '',";
             }
         }
@@ -254,8 +250,8 @@ PHP. "\n";
             return '';
         }
         $parts = [];
-        foreach ($dto->properties as $propName) {
-            $parts[] = "{$propName}: \$data['{$propName}']";
+        foreach ($dto->resolveProperties() as $resolved) {
+            $parts[] = "{$resolved['name']}: \$data['{$resolved['name']}']";
         }
         return implode(', ', $parts);
     }

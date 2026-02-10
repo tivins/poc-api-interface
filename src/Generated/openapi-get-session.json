@@ -5,18 +5,18 @@
         "version": "1.0.0"
     },
     "paths": {
-        "/login": {
-            "post": {
-                "summary": "Login to the system",
+        "/session": {
+            "get": {
+                "summary": "Get current session (user + profile + token)",
                 "tags": [
                     "auth"
                 ],
-                "description": "Login to the system",
+                "description": "Returns user and profile data plus session token and expiry.",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/LoginRequest"
+                                "$ref": "#/components/schemas/GetSessionRequest"
                             }
                         }
                     }
@@ -27,17 +27,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/LoginResponse"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                    "$ref": "#/components/schemas/GetSessionResponse"
                                 }
                             }
                         }
@@ -48,23 +38,18 @@
     },
     "components": {
         "schemas": {
-            "LoginRequest": {
+            "GetSessionRequest": {
                 "type": "object",
                 "properties": {
-                    "email": {
-                        "type": "string",
-                        "format": "email"
-                    },
-                    "password": {
-                        "type": "string"
+                    "id": {
+                        "type": "integer"
                     }
                 },
                 "required": [
-                    "email",
-                    "password"
+                    "id"
                 ]
             },
-            "LoginResponse": {
+            "GetSessionResponse": {
                 "type": "object",
                 "properties": {
                     "id": {
@@ -74,8 +59,13 @@
                         "type": "string"
                     },
                     "email": {
-                        "type": "string",
-                        "format": "email"
+                        "type": "string"
+                    },
+                    "avatar": {
+                        "type": "string"
+                    },
+                    "bio": {
+                        "type": "string"
                     },
                     "token": {
                         "type": "string"
@@ -88,19 +78,10 @@
                     "id",
                     "name",
                     "email",
+                    "avatar",
+                    "bio",
                     "token",
                     "expiresAt"
-                ]
-            },
-            "ForbiddenResponse": {
-                "type": "object",
-                "properties": {
-                    "message": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "message"
                 ]
             }
         }

@@ -167,14 +167,17 @@ class OpenAPI
         $properties = [];
         $required = [];
         try {
-            $ref = new \ReflectionClass($dto->class);
-            foreach ($dto->properties as $propName) {
-                $prop = $ref->getProperty($propName);
-                $properties[$propName] = $this->propertyToSchema($prop);
-                $required[] = $propName;
+            foreach ($dto->resolveProperties() as $resolved) {
+                $name = $resolved['name'];
+                $required[] = $name;
+                if ($resolved['reflection'] !== null) {
+                    $properties[$name] = $this->propertyToSchema($resolved['reflection']);
+                } else {
+                    $properties[$name] = $this->phpTypeToSchema($resolved['type']);
+                }
             }
         } catch (\Throwable) {
-            foreach ($dto->properties as $propName) {
+            foreach ($dto->getPropertyNames() as $propName) {
                 $properties[$propName] = ['type' => 'string'];
                 $required[] = $propName;
             }
